@@ -1,0 +1,68 @@
+@startuml
+title Make Reservation
+
+actor Customer
+participant "Application" as Application
+participant "ReservationService" as ReservationService
+participant "CarService" as CarService
+participant "PaymentService" as PaymentService
+database "Database" as DB
+
+Customer -> Application: makeReservation(carId, startDate, endDate)
+activate Application
+
+Application -> ReservationService: processReservation(carId, startDate, endDate, customerId)
+activate ReservationService
+
+ReservationService -> CarService: isCarAvailable(carId, startDate, endDate)
+activate CarService
+
+CarService -> DB: findCarAvailability(carId, dates)
+activate DB
+DB --> CarService: return availability(true)
+deactivate DB
+
+CarService --> ReservationService: return carAvailable(true)
+deactivate CarService
+
+alt isAvailable == true
+
+    opt Add Optional Features
+        Customer -> Application: addFeatures(featureList)
+        Application -> ReservationService: addOptionalFeatures(reservationDetails, featureList)
+        ReservationService --> Application: return updatedCost(newTotal)
+        Application --> Customer: displayUpdatedCost(newTotal)
+    end
+
+    Customer -> Application: confirmReservation(paymentDetails)
+    Application -> ReservationService: finalizeReservation(reservationDetails, paymentDetails)
+
+    ReservationService -> PaymentService: processPayment(amount, cardDetails)
+    activate PaymentService
+    PaymentService--> ReservationService: return paymentStatus(success)
+    deactivate PaymentService
+
+    alt paymentStatus == success
+        ReservationService -> DB: createReservationRecord(reservationData)
+        activate DB
+        DB --> ReservationService: return reservationConfirmation(id)
+        deactivate DB
+        
+        ReservationService --> Application: return reservationSuccess(confirmationId)
+        Application --> Customer: displayConfirmation(confirmationId, details)
+    else paymentStatus == fail
+        ReservationService --> Application: return paymentError("Payment failed")
+        Application --> Customer: displayPaymentError("Payment failed")
+    end
+
+else isAvailable == false
+    ReservationService --> Application: return availabilityError("Car not available")
+    Application --> Customer: displayAvailabilityError("Car not available")
+end
+
+deactivate ReservationService
+deactivate Application
+
+destroy Customer
+
+@enduml

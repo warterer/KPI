@@ -1,0 +1,43 @@
+@startuml
+title Add New Car
+
+actor Manager
+participant "Application" as Application
+participant "CarService" as CarService
+participant "ValidationService" as Validator
+database "Database" as DB
+
+Manager -> Application: navigateToAddCarForm()
+activate Application
+Application --> Manager: displayCarForm()
+
+Manager -> Application: submitNewCar(carDetails)
+
+Application -> CarService: addNewCar(carDetails)
+activate CarService
+
+CarService -> Validator: validateCarData(carDetails)
+activate Validator
+Validator --> CarService: return validationStatus(isValid, errors)
+deactivate Validator
+
+alt isValid == true
+    CarService -> DB: insertCarRecord(carData)
+    activate DB
+    DB --> CarService: return newCar(carId)
+    deactivate DB
+    
+    CarService --> Application: return carAddedSuccess(carId)
+    Application --> Manager: displaySuccessMessage("Car added")
+
+else isValid == false
+    CarService --> Application: return validationError(errors)
+    Application --> Manager: displayErrorMessages(errors)
+end
+
+deactivate CarService
+deactivate Application
+
+destroy Manager
+
+@enduml
