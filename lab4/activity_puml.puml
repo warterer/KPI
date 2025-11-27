@@ -1,0 +1,68 @@
+@startuml
+title Make Reservation
+
+|Customer|
+|Application|
+|Payment Gateway|
+
+|Customer|
+start
+:Select Car and Dates;
+
+|Application|
+:Check Car Availability;
+
+if (Is Car Available?) then (Yes)
+  |Customer|
+  :Review Details;
+  
+  if (Add Optional Features?) then (Yes)
+    :Select Extra Features;
+  else (No)
+  endif
+  
+  :Enter Payment Details;
+
+  :Confirm Reservation;
+  
+  |Application|
+  :Initiate Payment;
+  
+  |Payment Gateway|
+  :Process Transaction;
+  
+  if (Payment Success?) then (Yes)
+    
+    fork
+      |Application|
+      :Create Reservation Record;
+
+    fork again
+      |Application|
+      :Send Confirmation Email;
+
+    end fork
+    
+    |Application|
+    :Generate Final Confirmation;
+    
+    |Customer|
+    :Receive Success Message;
+    
+  else (No)
+    |Application|
+    :Generate Payment Error;
+    |Customer|
+    :Receive Error Notification;
+  endif
+
+else (No)
+  |Application|
+  :Generate Availability Error;
+  |Customer|
+  :Receive Error Notification;
+endif
+
+stop
+
+@enduml
