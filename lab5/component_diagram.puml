@@ -1,0 +1,166 @@
+@startuml
+title Car Rental System
+
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+package "Web App" {
+    
+    package "UI Layer" {
+        package "Pages" {
+            [HomePage]
+            [LoginPage]
+            [CarCatalogPage]
+            [CarDetailsPage]
+            [ProfilePage]
+            [AdminPage]
+        }
+        
+        package "Components" {
+            [Home Components]
+            [Login Components]
+            [CarCatalog Components]
+            [CarDetails Components]
+            [Profile Components]
+            [Admin Components]
+        }
+    }
+
+    package "State Layer (Stores)" {
+        [AuthStore]
+        [CarStore]
+        [ReservationStore]
+        database "LocalStorage" as LS
+    }
+
+    package "Service Layer (APIs)" {
+        [Auth API Client]
+        [Car API Client]
+        [Reservation API Client]
+        [Customer API Client]
+        [Payment API Client]
+    }
+}
+
+[HomePage] --> [Home Components]
+[LoginPage] --> [Login Components]
+[CarCatalogPage] --> [CarCatalog Components]
+[CarDetailsPage] --> [CarDetails Components]
+[ProfilePage] --> [Profile Components]
+[AdminPage] --> [Admin Components]
+
+[Components] ..> [AuthStore]
+[Components] ..> [CarStore]
+[Components] ..> [ReservationStore]
+
+[AuthStore] --> [Auth API Client]
+[CarStore] --> [Car API Client]
+[ReservationStore] --> [Reservation API Client]
+[AuthStore] --> LS
+
+package "API Server" {
+
+    [HTTP Router]
+    [Validator]
+    [JSON Schema Validator]
+
+    package "Auth Module" {
+        [Auth Controller]
+        [Auth Service]
+        [Auth Repository]
+        interface "CreateProfilePort" as ICreateProf
+    }
+
+    package "Car Catalog Module" {
+        [Car Controller]
+        [Car Service]
+        [Car Repository]
+    }
+
+    package "Customer Module" {
+        [Customer Controller]
+        [Customer Service]
+        [Customer Repository]
+    }
+
+    package "Payment Module" {
+        [Payment Controller]
+        [Payment Service]
+        [Payment Repository]
+        [Webhook Controller]
+    }
+
+    package "Reservation Module" {
+        [Reservation Controller]
+        [Reservation Service]
+        [Reservation Repository]
+        [Availability Repository]
+
+        () "Payment API" as IPay
+        () "Notification API" as INotify
+        () "Customer API" as ICust
+        () "Car API" as ICar
+    }
+    
+    [DB Connection Pool]
+    database "PostgreSQL"
+    cloud "Email Gateway"
+}
+
+[Auth API Client] --> [HTTP Router] : /auth
+[Car API Client] --> [HTTP Router] : /cars
+[Reservation API Client] --> [HTTP Router] : /reservations
+[Customer API Client] --> [HTTP Router] : /customers
+[Payment API Client] --> [HTTP Router] : /payments
+
+[HTTP Router] --> [Validator]
+[Validator] --> [JSON Schema Validator]
+
+[HTTP Router] --> [Auth Controller]
+[HTTP Router] --> [Car Controller]
+[HTTP Router] --> [Reservation Controller]
+[HTTP Router] --> [Customer Controller]
+[HTTP Router] --> [Payment Controller]
+[HTTP Router] --> [Webhook Controller]
+
+[Auth Controller] --> [Auth Service]
+[Auth Service] --> [Auth Repository]
+[Auth Service] --> ICreateProf : calls
+
+[Car Controller] --> [Car Service]
+[Car Service] --> [Car Repository]
+
+[Customer Controller] --> [Customer Service]
+[Customer Service] --> [Customer Repository]
+' Реалізація порту створення профілю
+ICreateProf ..> [Customer Service] : implements
+
+[Payment Controller] --> [Payment Service]
+[Webhook Controller] --> [Payment Service]
+[Payment Service] --> [Payment Repository]
+
+[Reservation Controller] --> [Reservation Service]
+[Reservation Service] --> [Reservation Repository]
+[Reservation Service] --> [Availability Repository]
+
+[Reservation Service] --> IPay
+[Reservation Service] --> INotify
+[Reservation Service] --> ICust
+[Reservation Service] --> ICar
+
+IPay ..> [Payment Service] : adapts
+INotify ..> [Email Gateway] : adapts
+ICust ..> [Customer Service] : adapts
+ICar ..> [Car Service] : adapts
+
+[Auth Repository] --> [DB Connection Pool]
+[Car Repository] --> [DB Connection Pool]
+[Customer Repository] --> [DB Connection Pool]
+[Payment Repository] --> [DB Connection Pool]
+[Reservation Repository] --> [DB Connection Pool]
+[Availability Repository] --> [DB Connection Pool]
+
+[DB Connection Pool] --> [PostgreSQL]
+
+@enduml
