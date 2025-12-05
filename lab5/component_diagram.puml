@@ -133,7 +133,7 @@ package "API Server" {
 
 [Customer Controller] --> [Customer Service]
 [Customer Service] --> [Customer Repository]
-' Реалізація порту створення профілю
+
 ICreateProf ..> [Customer Service] : implements
 
 [Payment Controller] --> [Payment Service]
@@ -162,5 +162,6 @@ ICar ..> [Car Service] : adapts
 [Availability Repository] --> [DB Connection Pool]
 
 [DB Connection Pool] --> [PostgreSQL]
+
 
 @enduml
